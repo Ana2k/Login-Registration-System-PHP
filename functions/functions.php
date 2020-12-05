@@ -44,7 +44,7 @@ return $msg;
     }
 
     function email_exists($email){
-        $sql = "SELECT id FROM users WHERE email = $email";
+        $sql = "SELECT id FROM users WHERE email = '$email'";
         $result = query($sql);
 
         if(row_count($result) == 1){
@@ -56,7 +56,7 @@ return $msg;
     }
 
     function user_name_exists($user_name){
-        $sql = "SELECT id FROM users WHERE user_name = $user_name";
+        $sql = "SELECT id FROM users WHERE user_name = '$user_name'";
         $result = query($sql);
 
         if(row_count($result) == 1){
@@ -65,6 +65,10 @@ return $msg;
         else{
             return false;
         }
+    }
+
+    function send_email($email, $subject, $msg, $headers){
+        return mail($email, $subject, $msg, $headers);
     }
 
 
@@ -114,12 +118,12 @@ function validate_user_reg(){
             $errors[] = "username cannot be empty<br>";
 
         }
-        if(!user_name_exists($user_name)){
+        if(user_name_exists($user_name)){
             $errors[] = "Username already taken<br>";
 
         }//User name
 
-        if(!email_exists($email)){
+        if(email_exists($email)){
             $errors[] = "Email already taken<br>";
 
         }
@@ -144,13 +148,97 @@ function validate_user_reg(){
             //DELIMITER in validation_errors follows very strict format like python
             }
         }
+        else{
+            if(register_user($first_name,$last_name, $user_name, $email , $password)){
+                //echo "USER REGISTERED";
+                set_message("<p class='bg-success text-center'>Please check your registered mail for an activation link</p>");
+                redirect("index.php");
+                
+            }
+            else{
+                set_message("<p class='bg-danger text-center'>Sorry user registration failure.</p>");
+                redirect("index.php");
+            }
+        }
 
     }
 
 }
 
-    
+/****REGUSTER USER FUNCTIONS *****/
 
+function register_user($first_name,$last_name, $user_name, $email , $password){
+
+    $first_name=escape($first_name);
+    $last_name=escape($last_name);
+    $user_name=escape($user_name);
+    $email=escape($email);
+    $password=escape($password);
+
+    if(email_exists($email)){
+        return false;
+    }
+    else if(user_name_exists($user_name)){
+        return false;
+    }
+    else{
+        $password = md5($password);
+        $validation_code = md5($user_name + microtime());
+
+        $sql= "INSERT INTO users(first_name, last_name, user_name, password, validation_code, active,email)";
+        $sql.= "VALUES('$first_name', '$last_name', '$user_name', '$password', '$validation_code', 0,'$email')";
+        
+        $result = query($sql);
+        confirm($result);
+
+
+        //for mails
+        $subject= "Activate Account";
+        $msg = "Click on the link below to activate your account
+        http://localhost/files/activate.php?email=$email&code=$validation_code
+        ";
+
+        $header = "From: noreply@website.com";
+
+        
+        return true;
+
+    }
+}
+
+
+/****ACTIVATE USER FUNCTIONS *****/
+function activate_user(){
+    if($_SERVER['REQUEST_METHOD'] == "GET"){
+ 
+        if(isset($_GET['email'])){
+
+            echo $email = clean($_GET['email']);
+
+            echo $validation_code = clean($_GET['code']);
+            
+            $sql = "SELECT id FROM users WHERE email = '".escape($_GET['email'])."' AND validation_code= '".escape($_GET['code'])."'";
+            $result = query($sql);
+            confirm($result);
+
+            if(row_count($result) == 1){
+                
+                $sql2= "UPDATE users SET active =1, validation_code = 0 WHERE email = '".escape($email)."' AND validation_code = '".escape($validation_code)."' ";
+                $result2 = query($sql2);
+                confirm($result2);
+                set_message("<p class= 'bg-success'> Your account has been activated please login</p>");
+
+                redirect("login.php");
+            }
+            else{
+                set_message("<p class= 'bg-danger'> Sorry your account could not be activated.</p>");
+
+                redirect("login.php");
+            }
+        }
+    }
+    //echo "activate_user is working";
+}
 
 
     

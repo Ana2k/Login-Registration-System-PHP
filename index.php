@@ -3,7 +3,7 @@
 <?php include("includes/nav.php") ?>
 
    
-	<?php
+	<!--<php
 
     $sql="SELECT * FROM users";
     $result = query($sql);//sending this to predefined function query() in db.php
@@ -12,9 +12,10 @@
     $row=fetch_array($result);
     echo $row['user_name'].'<br>'.$row['first_name'];
 
-  ?>
+  ?>-->
 	<div class="jumbotron">
-		<h1 class="text-center"> Home Page</h1>
+  <?php display_message(); ?>
+		<h1 class="text-center"> Home</h1>
 	</div>
 
   <?php include("includes/footer.php") ?>
