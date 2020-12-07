@@ -34,7 +34,7 @@
 
     function validation_errors($error_msg){
 $msg = <<<DELIMITER
-<div class="alert alert-warning alert-dismissible" role="alert">
+<div class="alert alert-danger alert-dismissible" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span>
             </button><strong>Warning!</strong> $error_msg
             </div>
@@ -72,12 +72,15 @@ return $msg;
     }
 
 
-/****VALIDATION FUNCTIONS *****/
+/****VALIDATe USER REG *****/
 function validate_user_reg(){
+    
+    $errors = [];
+
     $min=3;
     $max=20;
 
-    if($_SERVER['REQUEST_METHOD'] === "POST"){
+    if($_SERVER['REQUEST_METHOD'] == "POST"){
         $first_name = clean($_POST['first_name']);
         $last_name = clean($_POST['last_name']);
         $user_name = clean($_POST['user_name']);
@@ -240,7 +243,95 @@ function activate_user(){
     //echo "activate_user is working";
 }
 
+/***VALIDATE USER LOGIN**/
 
+function validate_user_login(){
+    $min=3;
+    $max=20;
+    //echo "BEFORE";
+    if($_SERVER['REQUEST_METHOD'] == "POST"){
+            
+            $email = clean($_POST['email']);
+            $password = clean($_POST['password']);
+            $remember = clean(isset($_POST['remember']));
+
+
+            if(empty($email)){
+                $errors[] = "Email feild cannot be empty<br>";
+            }
+            if(empty($password)){
+                $errors[] = "Password feild cannot be empty<br>";
+            }
+
+            if(!empty($errors)){
+
+                foreach($errors as $err){
     
+           
+                  echo validation_errors($err);
+                
+                //DELIMITER in validation_errors follows very strict format like python
+                }
+            }
+            else{
+                if(login_user($email, $password, $remember)){
+                    redirect("admin.php");
+                }
+                else{
+                    echo validation_errors("Your credentials are not correct ");
+                }
+            }
+           
+    }
+}
+
+/*****Login user function */
+function login_user($email, $password,$remember){
+
+    $sql = "SELECT password,id FROM users WHERE email = '".escape($email)."' AND active=1 ";
+
+    $result = query($sql);
+
+    if(row_count($result) == 1){
+        $row = fetch_array($result);
+
+        $db_password=$row['password'];
+
+        //echo "if1 executes";
+    
+    if(md5($password) === $db_password){
+            echo $remember."<br>";
+        if($remember == 1){
+            
+            setcookie('email', $email, time()+ 60);
+
+        }
+        //echo "if2 executes";
+
+        $_SESSION['email']= $email;
+
+        return true;
+    }
+    
+    else{
+        //echo "else executes";
+        return false;
+    }
+  }
+
+}//function ends here
+    
+/*****Logged in function */
+
+function logged_in(){
+
+    if(isset($_SESSION['email']) || isset($_COOKIE['email'])){
+
+        return true;
+    }
+    else{
+        return false;
+    }
+}
 
 ?>

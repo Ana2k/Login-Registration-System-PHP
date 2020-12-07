@@ -10,6 +10,7 @@
 		<div class="col-lg-6 col-lg-offset-3">
 
 			<?php display_message(); ?>
+			<?php validate_user_login();  ?>
 								
 		</div>
 	</div>
@@ -39,7 +40,7 @@
 										password" tabindex="2" class="form-control" placeholder="Password" required>
 									</div>
 									<div class="form-group text-center">
-										<input type="checkbox" tabindex="3" class="" name="remember" id="remember">
+										<input type="checkbox" tabindex="3" class="" name="remember" id="remember"><!--name ke barabar hi rkhna hai??-->
 										<label for="remember"> Remember Me</label>
 									</div>
 									<div class="form-group">
