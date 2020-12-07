@@ -303,7 +303,7 @@ function login_user($email, $password,$remember){
             echo $remember."<br>";
         if($remember == 1){
             
-            setcookie('email', $email, time()+ 60);
+            setcookie('email', $email, time()+ 86400);
 
         }
         //echo "if2 executes";
