@@ -1,5 +1,7 @@
 <?php
 
+require '../vendor/autoload.php';
+
 /****HELPER FUNCTIONS *****/
 
     function clean($string){
@@ -69,6 +71,34 @@ return $msg;
     }
 
     function send_email($email, $subject, $msg, $headers){
+        
+            // Instantiation and passing `true` enables exceptions
+            $mail = new PHPMailer();
+
+            
+                  //Server settings
+                $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      // Enable verbose debug output
+                $mail->isSMTP();                                            // Send using SMTP
+                $mail->Host       = 'smtp.mailtrap.io';                    // Set the SMTP server to send through
+                $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+                $mail->Username   = 'user@example.com';                     // SMTP username
+                $mail->Password   = 'secret';                               // SMTP password
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+                $mail->Port       = 587;                                       // TCP port to connect to
+
+                $mail->Subject = 'Here is the subject';
+                $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
+                $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+            if(!$mail->send()){
+                   
+                echo "Message could not be sent<br>Mailer Error: {$mail->ErrorInfo}";
+                
+            } 
+            else{
+                echo "Message has been sent. ";
+            }
+        
         return mail($email, $subject, $msg, $headers);
     }
 
@@ -187,7 +217,7 @@ function register_user($first_name,$last_name, $user_name, $email , $password){
     }
     else{
         $password = md5($password);
-        $validation_code = md5($user_name + microtime());
+        $validation_code = md5($user_name . microtime());
 
         $sql= "INSERT INTO users(first_name, last_name, user_name, password, validation_code, active,email)";
         $sql.= "VALUES('$first_name', '$last_name', '$user_name', '$password', '$validation_code', 0,'$email')";
@@ -230,7 +260,7 @@ function activate_user(){
                 $sql2= "UPDATE users SET active =1, validation_code = 0 WHERE email = '".escape($email)."' AND validation_code = '".escape($validation_code)."' ";
                 $result2 = query($sql2);
                 confirm($result2);
-                set_message("<p class= 'bg-success'> Your account has been activated please login</p>");
+                set_message("<p class= 'bg-success text-center'> Your account has been activated please login</p>");
 
                 redirect("login.php");
             }
@@ -350,7 +380,7 @@ function recover_password(){
 
             if(email_exists($email)){
                 
-                $validation_code = md5($email+microtime());
+                $validation_code = md5($email.microtime());
                 
 
                 setcookie('temp_access_code', $validation_code, time()+ 1000);
@@ -369,12 +399,13 @@ function recover_password(){
 
                 $headers = "From: noreply@yourwebsite.com";
 
+                send_email($email, $subject, $message, $headers);
 
                 if(!send_email($email, $subject, $message, $headers)){
 
                     echo validation_errors("Email could not be sent");
 
-                }
+                }//CHANGE THIS CODE TO send_email(...); WHEN ON LIVE SERVER
 
                 set_message("<p class='bg-success text-center'>Please check mail for password reset code</p>");
                 redirect("index.php");
@@ -469,6 +500,10 @@ function password_reset(){
                     set_message("<p class='bg-success text-center'>Your password has been reset, please login with the new password.</p>");
 
                     redirect("login.php");
+                }
+                else{
+
+                    echo validation_errors("Password feilds do not match");
                 }
 
             }
