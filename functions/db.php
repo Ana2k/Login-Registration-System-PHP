@@ -24,6 +24,8 @@
         global $con;
 
         return mysqli_query($con, $query);
+
+        confirm($result);
     }
 
     function confirm($result){

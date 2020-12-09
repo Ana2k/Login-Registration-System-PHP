@@ -23,12 +23,13 @@
         if(isset($_SESSION['message'])){
            echo $_SESSION['message'];
 
-           unset($_SESSION['message']);
+           //unset($_SESSION['message']);
         }
     }
 
     function token_generator(){
-        $token = $_SESSION['token']= md5(uniqid(mt_rand(),true));
+        $token = md5(uniqid(mt_rand(),true));
+        $_SESSION['token']= $token;
         return $token;
     }
 
@@ -192,7 +193,7 @@ function register_user($first_name,$last_name, $user_name, $email , $password){
         $sql.= "VALUES('$first_name', '$last_name', '$user_name', '$password', '$validation_code', 0,'$email')";
         
         $result = query($sql);
-        confirm($result);
+        
 
 
         //for mails
@@ -222,7 +223,7 @@ function activate_user(){
             
             $sql = "SELECT id FROM users WHERE email = '".escape($_GET['email'])."' AND validation_code= '".escape($_GET['code'])."'";
             $result = query($sql);
-            confirm($result);
+            
 
             if(row_count($result) == 1){
                 
@@ -300,7 +301,7 @@ function login_user($email, $password,$remember){
         //echo "if1 executes";
     
     if(md5($password) === $db_password){
-            echo $remember."<br>";
+            //echo $remember."<br>";
         if($remember == 1){
             
             setcookie('email', $email, time()+ 86400);
@@ -334,4 +335,103 @@ function logged_in(){
     }
 }
 
+/****Recover Password Function****/
+
+function recover_password(){
+    if($_SERVER['REQUEST_METHOD'] == "POST"){
+
+        //echo "inside recover<br>";
+
+        if(isset($_SESSION['token']) && $_POST['token'] === $_SESSION['token'])
+       {
+                     
+            $email = clean($_POST['email']);
+
+            if(email_exists($email)){
+                
+                $validation_code = md5($email+microtime());
+                
+
+                setcookie('temp_access_code', $validation_code, time()+ 600);
+                
+                $sql = "UPDATE users SET validation_code = '".escape($validation_code)."' WHERE email = '".escape($email)."'";
+                                
+                $result = query($sql);               
+            
+
+                $subject ="Please reset your password";
+                $message = "Here is your Password reset code {$validation_code}
+                
+                Click to reset your password http://localhost/files/code.php?email=$email&code=$validation_code
+                
+                ";//18780c26d647c780d99c037432c8a5d0
+
+                $headers = "From: noreply@yourwebsite.com";
+
+
+                if(!send_email($email, $subject, $message, $headers)){
+
+                    echo validation_errors("Email could not be sent");
+
+                }
+
+                set_message("<p class='bg-success text-center'>Please check mail for password reset code</p>");
+                redirect("index.php");
+            }
+            else{
+               echo validation_errors("This email id does not exist ");
+            }
+       }
+    }//post
+}//function
+
+
+/*******Code validation******/
+function validate_code(){
+
+    if(isset($_COOKIE['temp_access_code'])){
+
+        //echo "first if";
+
+        if(!isset($_GET['email']) && !isset($_GET['code'])){
+
+            //echo "second if";
+                redirect("index.php");
+
+            }else if(empty($_GET['email']) || empty($_GET['code'])){
+                //echo "3rd if";
+                redirect("index.php");
+            }
+            else{
+ 
+                if(isset($_POST['code'])){
+
+                    $validation_code = clean($_POST['code']);
+                    $email = clean($_GET['email']);
+
+
+                    $sql = "SELECT id FROM users WHERE validation_code = '".escape($validation_code)."' AND email='".escape($email)."'";
+                    $result = query($sql);
+
+                    if(row_count($result) ==1){
+                        redirect("reset.php");
+                    }
+                    
+                }
+                else{
+
+                    echo validation_errors("Sorry wrong validation code");
+                }
+            }
+
+    }
+    else{
+
+        echo "this else was executed Sorry your cookie has expired";
+
+        set_message("<p class='bg-danger text-center'> Sorry your cookie code expired.</p>");
+
+        redirect("recover.php");
+    }
+}
 ?>
