@@ -23,7 +23,7 @@
         if(isset($_SESSION['message'])){
            echo $_SESSION['message'];
 
-           //unset($_SESSION['message']);
+           unset($_SESSION['message']);
         }
     }
 
@@ -279,7 +279,8 @@ function validate_user_login(){
                     redirect("admin.php");
                 }
                 else{
-                    echo validation_errors("Your credentials are not correct ");
+                    echo validation_errors("Invalid Login<br>");
+                    set_message("<p class='bg-danger text-center'>Re-enter credentials or Activate account</p>");
                 }
             }
            
@@ -352,7 +353,7 @@ function recover_password(){
                 $validation_code = md5($email+microtime());
                 
 
-                setcookie('temp_access_code', $validation_code, time()+ 600);
+                setcookie('temp_access_code', $validation_code, time()+ 1000);
                 
                 $sql = "UPDATE users SET validation_code = '".escape($validation_code)."' WHERE email = '".escape($email)."'";
                                 
@@ -364,7 +365,7 @@ function recover_password(){
                 
                 Click to reset your password http://localhost/files/code.php?email=$email&code=$validation_code
                 
-                ";//18780c26d647c780d99c037432c8a5d0
+                ";
 
                 $headers = "From: noreply@yourwebsite.com";
 
@@ -381,6 +382,14 @@ function recover_password(){
             else{
                echo validation_errors("This email id does not exist ");
             }
+       }
+       else{
+
+        redirect("index.php");
+       }
+
+       if(isset($_POST['cancel_submit'])){
+           redirect("login.php");
        }
     }//post
 }//function
@@ -414,14 +423,18 @@ function validate_code(){
                     $result = query($sql);
 
                     if(row_count($result) ==1){
-                        redirect("reset.php");
+
+                        setcookie('temp_access_code', $validation_code, time()+ 600);
+
+                        redirect("reset.php?email=$email&code=$validation_code");
+                    }
+                    else{
+
+                        echo validation_errors("Sorry wrong validation code");
                     }
                     
                 }
-                else{
-
-                    echo validation_errors("Sorry wrong validation code");
-                }
+                
             }
 
     }
@@ -434,4 +447,40 @@ function validate_code(){
         redirect("recover.php");
     }
 }
+
+/*******Password Reset Function******/
+
+function password_reset(){
+
+    if(isset($_COOKIE['temp_access_code'])){
+
+        if(isset($_SESSION['token']) && isset($_POST['token'])){
+
+            if($_POST['token'] === $_SESSION['token']){
+
+                if($_POST['password'] === $_POST['confirm_password']){
+
+                    $updated_password = md5($_POST['password']);
+
+                    $sql = "UPDATE users SET password = '".escape($updated_password)."' WHERE email = '".escape($_GET['email'])."'"; 
+                    
+                    query($sql);
+
+                    set_message("<p class='bg-success text-center'>Your password has been reset, please login with the new password.</p>");
+
+                    redirect("login.php");
+                }
+
+            }
+        }
+    }
+    else{
+
+    set_message("<p class='bg-danger text-center'>Sorry time expired.</p>");
+    redirect("recover.php");
+
+    }
+
+}
+
 ?>

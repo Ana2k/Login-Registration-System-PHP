@@ -14,7 +14,7 @@
 
   ?>-->
 	<div class="jumbotron">
-  <?php display_message(); echo "chal rha hu mai"; ?>
+  <?php display_message(); ?>
 		<h1 class="text-center"> Home</h1>
 	</div>
 

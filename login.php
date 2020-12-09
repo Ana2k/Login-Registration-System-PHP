@@ -2,15 +2,20 @@
 
 <?php include("includes/nav.php") ?>
 	
+	<?php
+	
+		if(logged_in()){
+			redirect("admin.php");
+		}//now you cant go to the login page when actually logged in
 
+	?>
 
 	
 
 	<div class="row">
 		<div class="col-lg-6 col-lg-offset-3">
 
-			<?php display_message(); ?>
-			<?php validate_user_login();  ?>
+			<?php validate_user_login(); display_message(); ?>
 								
 		</div>
 	</div>

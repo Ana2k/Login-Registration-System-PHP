@@ -1,9 +1,8 @@
 <?php include("includes/header.php") ?>
     <div class="row">
 				<div class="col-lg-6 col-lg-offset-3 col-md-6 col-md-offset-3">
-					<div class="alert-placeholder">
-
-					<?php recover_password(); display_message();?>
+				<?php  display_message(); recover_password();?>
+					<div class="alert-placeholder">	
 					
 					
 	
@@ -23,15 +22,15 @@
 											<div class="row">
 
 												<div class="col-lg-6 col-sm-6 col-xs-6">
-													<input type="submit" name="cancel-submit" id="cancel-submit" tabindex="2" class="form-control btn btn-danger" value="Cancel" />
+													<input type="submit" name="cancel_submit" id="cancel-submit" tabindex="2" class="form-control btn btn-danger" value="Cancel" />
 												</div>
 												<div class="col-lg-6 col-sm-6 col-xs-6">
 													<input type="submit" name="recover-submit" id="recover-submit" tabindex="2" class="form-control btn btn-success" value="Send Password Reset Link" />
 												</div>
-
 												
 											</div>
 										</div>
+										<input type="hidden" class="hide" name="token" id="token" value="<?php echo token_generator();?>">
 									</form>
 								</div>
 							</div>
