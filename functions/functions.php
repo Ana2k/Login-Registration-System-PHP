@@ -1,6 +1,5 @@
 <?php
 
-require '../vendor/autoload.php';
 
 /****HELPER FUNCTIONS *****/
 
@@ -71,32 +70,49 @@ return $msg;
     }
 
     function send_email($email, $subject, $msg, $headers){
+
+            require_once('PHPMailerAutoload.php');
         
             // Instantiation and passing `true` enables exceptions
             $mail = new PHPMailer();
 
             
-                  //Server settings
-                $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      // Enable verbose debug output
+                  //Server settings can BE IMPLEMENTED USING config <--class file
+                $mail->SMTPDebug = SMTP::DEBUG_SERVER;                     // Enable verbose debug output
                 $mail->isSMTP();                                            // Send using SMTP
-                $mail->Host       = 'smtp.mailtrap.io';                    // Set the SMTP server to send through
+                $mail->Host       = 'tls://smtp.gmail.com';                    // Set the SMTP server to send through
                 $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
-                $mail->Username   = 'user@example.com';                     // SMTP username
-                $mail->Password   = 'secret';                               // SMTP password
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
-                $mail->Port       = 587;                                       // TCP port to connect to
+                $mail->Username   = 'youremaile@gmail.com';        //CHANGE THIS WHILE USING MAIL FUNCTIONALITY             
+                $mail->Password   = '###########';                 //PUT YOUR PASSWORD HERE
+                
+                //DONT GIT YOUR PASSWORD BY MISTAKE !!!!!
 
-                $mail->Subject = 'Here is the subject';
-                $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
-                $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+                // SMTP password
+                $mail->SMTPSecure = 'tls';         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+                $mail->Port       = 587;
+                
+                $mail->setFrom('HandlingID@gmail.com','Your Name');// TCP port to connect to
+            	$mail->addAddress($email);     // Add a recipient
+            	//$mail->addAddress('ellen@example.com');               // Name is optional
+                //$mail->addReplyTo('curator@celesta.org.in', 'Information');
+                
+                $mail->isHTML(true);
+                $mail->CharSet = 'UTF-8'; 
+                
+
+                $mail->Subject = $subject;
+                $mail->Body    = $msg;  //For HTML
+                $mail->AltBody = $msg;  //For non HTML clients
 
             if(!$mail->send()){
-                   
+                 
+                //return false;
                 echo "Message could not be sent<br>Mailer Error: {$mail->ErrorInfo}";
                 
             } 
             else{
-                echo "Message has been sent. ";
+               echo "Message has been sent. ";
+               //return true;
             }
         
         return mail($email, $subject, $msg, $headers);
@@ -216,7 +232,7 @@ function register_user($first_name,$last_name, $user_name, $email , $password){
         return false;
     }
     else{
-        $password = md5($password);
+        $password = password_hash($password, PASSWORD_BCRYPT, array('cost'=>11));
         $validation_code = md5($user_name . microtime());
 
         $sql= "INSERT INTO users(first_name, last_name, user_name, password, validation_code, active,email)";
@@ -229,10 +245,14 @@ function register_user($first_name,$last_name, $user_name, $email , $password){
         //for mails
         $subject= "Activate Account";
         $msg = "Click on the link below to activate your account
-        http://localhost/files/activate.php?email=$email&code=$validation_code
+        <a href=\"http://localhost/files/activate.php?email=$email&code=$validation_code\"><br> 
+        
+        LINK HERE</a>
         ";
 
-        $header = "From: noreply@website.com";
+        $headers = "From: noreply@website.com";
+
+        send_email($email, $subject, $msg, $headers);
 
         
         return true;
@@ -331,7 +351,7 @@ function login_user($email, $password,$remember){
 
         //echo "if1 executes";
     
-    if(md5($password) === $db_password){
+    if(password_verify($password, $db_password)){
             //echo $remember."<br>";
         if($remember == 1){
             
@@ -390,16 +410,17 @@ function recover_password(){
                 $result = query($sql);               
             
 
-                $subject ="Please reset your password";
-                $message = "Here is your Password reset code {$validation_code}
+                $subject ="Please reset your password<br>";
+                $message = "Here is your Password reset code <b><h1>{$validation_code}</h1></b><br>
                 
-                Click to reset your password http://localhost/files/code.php?email=$email&code=$validation_code
+                Click to reset your password <br><b>http://localhost/files/code.php?email=$email&code=$validation_code</b><br>
                 
                 ";
 
-                $headers = "From: noreply@yourwebsite.com";
+                $headers = "<br>From: noreply@yourwebsite.com";
 
-                send_email($email, $subject, $message, $headers);
+
+
 
                 if(!send_email($email, $subject, $message, $headers)){
 
@@ -493,7 +514,7 @@ function password_reset(){
 
                     $updated_password = md5($_POST['password']);
 
-                    $sql = "UPDATE users SET password = '".escape($updated_password)."' WHERE email = '".escape($_GET['email'])."'"; 
+                    $sql = "UPDATE users SET password = '".escape($updated_password)."',validation_code=0,active=1 WHERE email = '".escape($_GET['email'])."'"; 
                     
                     query($sql);
 
